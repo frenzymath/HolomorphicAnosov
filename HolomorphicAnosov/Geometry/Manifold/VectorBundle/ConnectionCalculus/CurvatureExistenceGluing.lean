@@ -1,0 +1,8 @@
+import HolomorphicAnosov.Geometry.Manifold.VectorBundle.ConnectionCalculus.CurvatureExistenceGluingGap
+
+namespace HolomorphicAnosov.ConnectionCalculus
+
+
+abbrev exists_curvature_representative := @exists_curvature_representative_gap
+
+end HolomorphicAnosov.ConnectionCalculus

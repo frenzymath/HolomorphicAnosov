@@ -1,0 +1,4 @@
+.lake/
+.sandbox/
+*.olean
+*.ilean

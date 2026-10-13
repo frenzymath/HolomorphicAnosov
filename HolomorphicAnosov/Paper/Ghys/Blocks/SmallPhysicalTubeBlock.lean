@@ -1,0 +1,510 @@
+import HolomorphicAnosov.Paper.Ghys.RankOneDefsG18
+
+/-! Uniform smallness of physical normal size on sufficiently small tube neighborhoods.
+(Ghys, Prop. 2.2) -/
+
+open Manifold MeasureTheory
+namespace HolomorphicAnosov.Ghys
+open Set Filter TopologicalSpace _root_.Topology
+open scoped ContDiff Manifold Bundle _root_.Topology
+noncomputable section
+universe u
+attribute [local instance] complex_isManifold_real
+set_option linter.style.haveILetI false
+set_option linter.unusedVariables false
+set_option linter.unusedSectionVars false
+
+set_option backward.isDefEq.respectTransparency false in
+/-- For every `η > 0`, there is an open neighborhood of the tube center on which the
+physical normal size is less than `η` for all labels and points in that neighborhood.
+(Ghys, Prop. 2.2) -/
+theorem SmallPhysicalTubeBlock : ∀ {d : ℕ} {M : Type u}
+  [inst : TopologicalSpace M] [inst_1 : T2Space M] [inst_2 : SecondCountableTopology M] [inst_3 : CompactSpace M]
+  [inst_4 : ChartedSpace (ComplexModel d) M] [inst_5 : IsManifold (complexModel d) ∞ M] (f : Biholomorph d d M M)
+  (hmetric : HermitianTangentMetricCore d M) (hmetric_smooth : IsSmoothHermitianTangentMetric hmetric),
+  let this : MetricSpace M := rankComparisonMetric (d := d);
+  Nonempty M →
+    let originalAmbientMetric : MetricSpace M := inferInstance;
+    let g :
+      Bundle.ContMDiffRiemannianMetric (realModel d) ∞ (ComplexModel d) fun (x : M) => TangentSpace (realModel d) x :=
+      StableFoliationsSupport.originalSmoothRealMetric hmetric hmetric_smooth;
+    ∀ (a : AnosovDatum f),
+      a.metric = g →
+        Nonempty
+            (TensorAnosovBounds f.toReal a.splitting
+              (StableFoliationsSupport.originalSmoothRealMetric hmetric hmetric_smooth)) →
+          ∀ (ιs : Type u) (Ls : ιs → Type u) (rs : ιs → ℕ) (ts : (i : ιs) → TopologicalSpace (Ls i))
+            (cs : (i : ιs) → ChartedSpace (Fin (rs i) → ℝ) (Ls i))
+            (ss : ∀ (i : ιs), IsManifold 𝓘(ℝ, Fin (rs i) → ℝ) ∞ (Ls i))
+            (Fs : HPS.LeafPartition a.splitting.stable.toDistribution ιs Ls rs),
+            (∃ (β : Type u) (d_1 : β → ℕ) (T : β → Type u) (topT : (b : β) → TopologicalSpace (T b)),
+                Nonempty (HPS.LaminationBoxes Fs β d_1 T)) →
+              Nonempty (HPS.LeafDynamicalInvariance Fs f.toReal) →
+                ∀ (familiesS : HPS.SelectedFiniteC1NativePlaqueFamilies Fs)
+                  (coherentS : HPS.SelectedFiniteOrderNativePlaqueFamilies Fs),
+                  HPS.SourceBoundDistanceOutput Fs familiesS coherentS f.toReal edist →
+                    ∀ (ιu : Type u) (Lu : ιu → Type u) (ru : ιu → ℕ) (tu : (i : ιu) → TopologicalSpace (Lu i))
+                      (cu : (i : ιu) → ChartedSpace (Fin (ru i) → ℝ) (Lu i))
+                      (su : ∀ (i : ιu), IsManifold 𝓘(ℝ, Fin (ru i) → ℝ) ∞ (Lu i))
+                      (Fu : HPS.LeafPartition a.splitting.unstable.toDistribution ιu Lu ru),
+                      (∃ (β : Type u) (d_1 : β → ℕ) (T : β → Type u) (topT : (b : β) → TopologicalSpace (T b)),
+                          Nonempty (HPS.LaminationBoxes Fu β d_1 T)) →
+                        Nonempty (HPS.LeafDynamicalInvariance Fu f.toReal) →
+                          ∀ (familiesU : HPS.SelectedFiniteC1NativePlaqueFamilies Fu)
+                            (coherentU : HPS.SelectedFiniteOrderNativePlaqueFamilies Fu)
+                            (L : RankOneNativeLeaves f a.splitting) (labelU : M → ιu)
+                            (discU : (x : M) → TopologicalSpace.Opens (Fin (ru (labelU x)) → ℝ)) (mapU : (x : M) → ↥(discU x) → M)
+                            (stagesU :
+                              HPS.NativeSourcePlaqueStages (fun (i : ιu) => (Fu.leaf i).inclusion) labelU f.toReal.symm
+                                discU mapU)
+                            (AU : HPS.DistanceLeafIdentification Fu f.toReal.symm edist),
+                            AU.label = labelU →
+                              (∀ (p₀ : M),
+                                  let Φ : HPS.FiniteC1NativePlaqueFamily Fu p₀ (familiesU.dimension p₀) :=
+                                    familiesU.family p₀;
+                                  Nonempty
+                                      (HPS.SelectedFamilyGermRestriction (L := Lu) labelU discU mapU stagesU.center
+                                        (familiesU.dimension p₀) Φ.family.centerDomain
+                                        (TopologicalSpace.Opens.mk (Metric.ball (0) Φ.family.radius)
+                                          (Metric.isOpen_ball))
+                                        (fun
+                                            (z :
+                                              Φ.family.centerDomain.Elem ×
+                                                ↥(TopologicalSpace.Opens.mk (Metric.ball (0) Φ.family.radius)
+                                                    (Metric.isOpen_ball))) =>
+                                          (Φ.family.plaque z.1).param z.2.val)
+                                        (Subtype.mk (0)
+                                          (Metric.mem_ball_self Φ.family.radius_pos))) ∧
+                                    ∀ (p : Φ.family.centerDomain.Elem), Φ.label p = labelU p.val) →
+                                (∀ (N : ℕ) (p₀ : M),
+                                    let Φ : HPS.FiniteC1NativePlaqueFamily Fu p₀ (coherentU.dimension N p₀) :=
+                                      coherentU.family N p₀;
+                                    Nonempty
+                                        (HPS.SelectedFamilyGermRestriction (L := Lu) labelU discU mapU stagesU.center
+                                          (coherentU.dimension N p₀) Φ.family.centerDomain
+                                          (TopologicalSpace.Opens.mk (Metric.ball (0) Φ.family.radius)
+                                            (Metric.isOpen_ball))
+                                          (fun
+                                              (z :
+                                                Φ.family.centerDomain.Elem ×
+                                                  ↥(TopologicalSpace.Opens.mk (Metric.ball (0) Φ.family.radius)
+                                                      (Metric.isOpen_ball))) =>
+                                            (Φ.family.plaque z.1).param z.2.val)
+                                          (Subtype.mk (0)
+                                            (Metric.mem_ball_self Φ.family.radius_pos))) ∧
+                                      ∀ (p : Φ.family.centerDomain.Elem), Φ.label p = labelU p.val) →
+                                  ∀
+                                    (tubeLabels :
+                                      (p : M) →
+                                        TopologicalSpace.Opens (coherentU.family (2) p).family.centerDomain.Elem)
+                                    (hTubeLabel :
+                                      ∀ (p : M),
+                                        Subtype.mk p (coherentU.family (2) p).family.center_mem ∈
+                                          tubeLabels p)
+                                    (tubeImage : M → Set (ComplexModel d)),
+                                    (∀ (p : M), IsOpen (tubeImage p)) →
+                                      ∀
+                                        (tubeInverse :
+                                          (p : M) →
+                                            ↥(tubeLabels p) →
+                                              OpenPartialHomeomorph
+                                                ((Fin (coherentU.dimension (2) p) → ℝ) ×
+                                                  ↥(plaqueNormalSpace
+                                                      ((fun
+                                                            (z :
+                                                              (coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) =>
+                                                          originalMetricChartTensor_g18 g
+                                                            (coherentU.family (2)
+                                                                  p).family.receivingAnchor
+                                                            ((coherentU.coherence (2)
+                                                                  p).coordinate
+                                                              z.1 z.2))
+                                                        (Subtype.mk p
+                                                            (coherentU.family (2)
+                                                                  p).family.center_mem,
+                                                          0))
+                                                      ((fun
+                                                            (z :
+                                                              (coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) =>
+                                                          fderiv ℝ
+                                                            ((coherentU.coherence (2)
+                                                                  p).coordinate
+                                                              z.1)
+                                                            z.2)
+                                                        (Subtype.mk p
+                                                            (coherentU.family (2)
+                                                                  p).family.center_mem,
+                                                          0))))
+                                                (ComplexModel d)),
+                                        (∀ (p : M),
+                                            ContinuousOn
+                                              (fun (z : ↥(tubeLabels p) × ComplexModel d) =>
+                                                (tubeInverse p z.1).symm.toFun' z.2)
+                                              (univ ×ˢ tubeImage p)) →
+                                          (∀ (p : M),
+                                              0 ∈
+                                                (tubeInverse p
+                                                    (Subtype.mk
+                                                      (Subtype.mk p
+                                                        (coherentU.family (2)
+                                                              p).family.center_mem)
+                                                      (hTubeLabel p))).source) →
+                                            ∀
+                                              (coefficientLabels :
+                                                (p : M) →
+                                                  Set
+                                                    (coherentU.family (2)
+                                                            p).family.centerDomain.Elem),
+                                              (∀ (p : M),
+                                                  coefficientLabels p ∈
+                                                    𝓝
+                                                      (Subtype.mk p
+                                                        (coherentU.family (2)
+                                                              p).family.center_mem)) →
+                                                ∀
+                                                  (fixedTubeLabels :
+                                                    (p : M) →
+                                                      Set
+                                                        (coherentU.family (2)
+                                                                p).family.centerDomain.Elem),
+                                                  (∀ (p : M),
+                                                      fixedTubeLabels p ∈
+                                                        𝓝
+                                                          (Subtype.mk p
+                                                            (coherentU.family (2)
+                                                                  p).family.center_mem)) →
+                                                    let tubeChart : M → PartialEquiv M (ComplexModel d) :=
+                                                      fun (p : M) =>
+                                                      extChartAt (realModel d)
+                                                        (coherentU.family (2)
+                                                              p).family.receivingAnchor;
+                                                    let tubeTensor :
+                                                      (p : M) →
+                                                        (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem →
+                                                          (Fin (coherentU.dimension (2) p) → ℝ) →
+                                                            ComplexModel d →L[ℝ] ComplexModel d →L[ℝ] ℝ :=
+                                                      fun (p : M)
+                                                        (q :
+                                                          (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem)
+                                                        (v :
+                                                          Fin (coherentU.dimension (2) p) → ℝ) =>
+                                                      originalMetricChartTensor_g18 g
+                                                        (coherentU.family (2)
+                                                              p).family.receivingAnchor
+                                                        ((coherentU.coherence (2) p).coordinate q
+                                                          v);
+                                                    let tubeDerivative :
+                                                      (p : M) →
+                                                        (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem →
+                                                          (Fin (coherentU.dimension (2) p) → ℝ) →
+                                                            (Fin (coherentU.dimension (2) p) →
+                                                                ℝ) →L[ℝ]
+                                                              ComplexModel d :=
+                                                      fun (p : M)
+                                                        (q :
+                                                          (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem)
+                                                        (v :
+                                                          Fin (coherentU.dimension (2) p) → ℝ) =>
+                                                      fderiv ℝ
+                                                        ((coherentU.coherence (2) p).coordinate q)
+                                                        v;
+                                                    let tubeNormalSpace : M → Submodule ℝ (ComplexModel d) :=
+                                                      fun (p : M) =>
+                                                      plaqueNormalSpace
+                                                        (tubeTensor p
+                                                          (Subtype.mk p
+                                                            (coherentU.family (2)
+                                                                  p).family.center_mem)
+                                                          (0))
+                                                        (tubeDerivative p
+                                                          (Subtype.mk p
+                                                            (coherentU.family (2)
+                                                                  p).family.center_mem)
+                                                          (0));
+                                                    let tubeNormal :
+                                                      (p : M) →
+                                                        (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem →
+                                                          (Fin (coherentU.dimension (2) p) → ℝ) →
+                                                            ↥(tubeNormalSpace p) →L[ℝ] ComplexModel d :=
+                                                      fun (p : M)
+                                                        (q :
+                                                          (coherentU.family (2)
+                                                                  p).family.centerDomain.Elem)
+                                                        (v :
+                                                          Fin (coherentU.dimension (2) p) → ℝ) =>
+                                                      plaqueNormalFrame (tubeTensor p q v) (tubeDerivative p q v)
+                                                        (tubeNormalSpace p).subtypeL;
+                                                    (∀ (p : M),
+                                                        have D :
+                                                          (coherentU.family (2)
+                                                                      p).family.centerDomain.Elem ×
+                                                              (Fin (coherentU.dimension (2) p) →
+                                                                ℝ) →
+                                                            (Fin (coherentU.dimension (2) p) →
+                                                                ℝ) →L[ℝ]
+                                                              ComplexModel d :=
+                                                          fun
+                                                            (z :
+                                                              (coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) =>
+                                                          fderiv ℝ
+                                                            ((coherentU.coherence (2)
+                                                                  p).coordinate
+                                                              z.1)
+                                                            z.2;
+                                                        have b :
+                                                          (coherentU.family (2)
+                                                                      p).family.centerDomain.Elem ×
+                                                              (Fin (coherentU.dimension (2) p) →
+                                                                ℝ) →
+                                                            ComplexModel d →L[ℝ] ComplexModel d →L[ℝ] ℝ :=
+                                                          fun
+                                                            (z :
+                                                              (coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) =>
+                                                          originalMetricChartTensor_g18 g
+                                                            (coherentU.family (2)
+                                                                  p).family.receivingAnchor
+                                                            ((coherentU.coherence (2)
+                                                                  p).coordinate
+                                                              z.1 z.2);
+                                                        let K : Submodule ℝ (ComplexModel d) :=
+                                                          plaqueNormalSpace
+                                                            (b
+                                                              (Subtype.mk p
+                                                                  (coherentU.family (2)
+                                                                        p).family.center_mem,
+                                                                0))
+                                                            (D
+                                                              (Subtype.mk p
+                                                                  (coherentU.family (2)
+                                                                        p).family.center_mem,
+                                                                0));
+                                                        have N :
+                                                          (coherentU.family (2)
+                                                                      p).family.centerDomain.Elem ×
+                                                              (Fin (coherentU.dimension (2) p) →
+                                                                ℝ) →
+                                                            ↥K →L[ℝ] ComplexModel d :=
+                                                          fun
+                                                            (z :
+                                                              (coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) =>
+                                                          plaqueNormalFrame (b z) (D z) K.subtypeL;
+                                                        have size :
+                                                          ((coherentU.family (2)
+                                                                        p).family.centerDomain.Elem ×
+                                                                (Fin (coherentU.dimension (2) p) →
+                                                                  ℝ)) ×
+                                                              ↥K →
+                                                            ℝ :=
+                                                          fun
+                                                            (z :
+                                                              ((coherentU.family (2)
+                                                                          p).family.centerDomain.Elem ×
+                                                                  (Fin
+                                                                      (coherentU.dimension (2)
+                                                                        p) →
+                                                                    ℝ)) ×
+                                                                ↥K) =>
+                                                          √(DFunLike.coe
+                                                              (DFunLike.coe (b z.1) (DFunLike.coe (N z.1) z.2))
+                                                              (DFunLike.coe (N z.1) z.2));
+                                                        ContinuousAt size
+                                                            ((Subtype.mk p
+                                                                  (coherentU.family (2)
+                                                                        p).family.center_mem,
+                                                                0),
+                                                              0) ∧
+                                                          size
+                                                              ((Subtype.mk p
+                                                                    (coherentU.family (2)
+                                                                          p).family.center_mem,
+                                                                  0),
+                                                                0) =
+                                                            0) →
+                                                      (∀ (p : M), p ∈ (tubeChart p).source) →
+                                                        (∀ (p : M), (tubeChart p).toFun p ∈ tubeImage p) →
+                                                          let tubeGoodLabels : (p : M) → Set ↥(tubeLabels p) :=
+                                                            fun (p : M) =>
+                                                            {q : ↥(tubeLabels p) |
+                                                              0 ∈ (tubeInverse p q).source};
+                                                          let tubeLabelCover : M → Set M := fun (p : M) =>
+                                                            (fun (q : ↥(tubeLabels p)) => q.val.val) ''
+                                                              tubeGoodLabels p;
+                                                          (∀ (p : M), IsOpen (tubeLabelCover p)) →
+                                                            (∀ (p : M), p ∈ tubeLabelCover p) →
+                                                              (∀ (p : M),
+                                                                  ∀ q ∈ tubeGoodLabels p,
+                                                                    (tubeInverse p q).symm.toFun'
+                                                                        ((tubeChart p).toFun q.val.val) =
+                                                                      0) →
+                                                                let tubeCover : M → Set M := fun (p : M) =>
+                                                                  (tubeChart p).source ∩
+                                                                      (tubeChart p).toFun ⁻¹' tubeImage p ∩
+                                                                    tubeLabelCover p;
+                                                                (∀ (p : M), IsOpen (tubeCover p)) →
+                                                                  (∀ (p : M), p ∈ tubeCover p) →
+                                                                    let tubeNormalSize :
+                                                                      (p : M) →
+                                                                        ((coherentU.family (2)
+                                                                                      p).family.centerDomain.Elem ×
+                                                                              (Fin
+                                                                                  (coherentU.dimension
+                                                                                    (2) p) →
+                                                                                ℝ)) ×
+                                                                            ↥(tubeNormalSpace p) →
+                                                                          ℝ :=
+                                                                      fun (p : M)
+                                                                        (z :
+                                                                          ((coherentU.family (2)
+                                                                                      p).family.centerDomain.Elem ×
+                                                                              (Fin
+                                                                                  (coherentU.dimension
+                                                                                    (2) p) →
+                                                                                ℝ)) ×
+                                                                            ↥(tubeNormalSpace p)) =>
+                                                                      √(DFunLike.coe
+                                                                          (DFunLike.coe (tubeTensor p z.1.1 z.1.2)
+                                                                            (DFunLike.coe (tubeNormal p z.1.1 z.1.2)
+                                                                              z.2))
+                                                                          (DFunLike.coe (tubeNormal p z.1.1 z.1.2)
+                                                                            z.2));
+                                                                    ∀ (p : M) (η : ℝ),
+                                                                      0 < η →
+                                                                        ∃ (A : Set M),
+                                                                          IsOpen A ∧
+                                                                            p ∈ A ∧
+                                                                              A ⊆ tubeCover p ∧
+                                                                                ∀ (q : ↥(tubeLabels p)),
+                                                                                  q.val.val ∈ A →
+                                                                                    ∀ x ∈ A,
+                                                                                      let z :
+                                                                                        (Fin
+                                                                                              (coherentU.dimension
+                                                                                                (2)
+                                                                                                p) →
+                                                                                            ℝ) ×
+                                                                                          ↥(plaqueNormalSpace
+                                                                                              ((fun
+                                                                                                    (z :
+                                                                                                      (coherentU.family
+                                                                                                                (2)
+                                                                                                                p).family.centerDomain.Elem ×
+                                                                                                        (Fin
+                                                                                                            (coherentU.dimension
+                                                                                                              (2)
+                                                                                                              p) →
+                                                                                                          ℝ)) =>
+                                                                                                  originalMetricChartTensor_g18
+                                                                                                    g
+                                                                                                    (coherentU.family
+                                                                                                          (2)
+                                                                                                          p).family.receivingAnchor
+                                                                                                    ((coherentU.coherence
+                                                                                                          (2)
+                                                                                                          p).coordinate
+                                                                                                      z.1 z.2))
+                                                                                                (Subtype.mk p
+                                                                                                    (coherentU.family
+                                                                                                          (2)
+                                                                                                          p).family.center_mem,
+                                                                                                  0))
+                                                                                              ((fun
+                                                                                                    (z :
+                                                                                                      (coherentU.family
+                                                                                                                (2)
+                                                                                                                p).family.centerDomain.Elem ×
+                                                                                                        (Fin
+                                                                                                            (coherentU.dimension
+                                                                                                              (2)
+                                                                                                              p) →
+                                                                                                          ℝ)) =>
+                                                                                                  fderiv ℝ
+                                                                                                    ((coherentU.coherence
+                                                                                                          (2)
+                                                                                                          p).coordinate
+                                                                                                      z.1)
+                                                                                                    z.2)
+                                                                                                (Subtype.mk p
+                                                                                                    (coherentU.family
+                                                                                                          (2)
+                                                                                                          p).family.center_mem,
+                                                                                                  0))) :=
+                                                                                        (tubeInverse p q).symm.toFun'
+                                                                                          ((tubeChart p).toFun x);
+                                                                                      tubeNormalSize p
+                                                                                          ((q.val, z.1), z.2) <
+                                                                                        η := by
+  intro d M inst_1 inst_2 inst_3 inst_4 inst_5 inst_6 f hmetric hmetric_smooth this hM originalAmbientMetric g a hag hb ιs Ls rs ts cs ss Fs boxesS invS familiesS coherentS extraS ιu Lu ru tu cu su Fu boxesU invU familiesU coherentU L labelU discU mapU stagesU AU hAUlabel hfamilyU hcoherentU tubeLabels hTubeLabel tubeImage hTubeImage tubeInverse hTubeInverseContinuous hTubeZeroSource coefficientLabels hCoefficientLabels fixedTubeLabels hFixedTubeLabels tubeChart tubeTensor tubeDerivative tubeNormalSpace tubeNormal hTubeNormalSizeContinuous hTubeChartSource hTubeImageCenter tubeGoodLabels tubeLabelCover hTubeLabelCoverOpen hTubeLabelCoverCenter hTubeInverseAtZero tubeCover hTubeCoverOpen hTubeCoverCenter tubeNormalSize p η hη
+  let q₀ : tubeLabels p :=
+    ⟨⟨p,(coherentU.family 2 p).family.center_mem⟩,hTubeLabel p⟩
+  have hcont := (hTubeInverseContinuous p).continuousAt
+    ((isOpen_univ.prod (hTubeImage p)).mem_nhds
+      (show (q₀,tubeChart p p) ∈ univ ×ˢ tubeImage p from
+        ⟨mem_univ _,hTubeImageCenter p⟩))
+  have hzero : (tubeInverse p q₀).symm (tubeChart p p) = 0 :=
+    hTubeInverseAtZero p q₀ (hTubeZeroSource p)
+  have hsize : ContinuousAt (tubeNormalSize p) ((q₀.val,0),0) :=
+    (hTubeNormalSizeContinuous p).1
+  have hsize0 : tubeNormalSize p ((q₀.val,0),0) = 0 :=
+    (hTubeNormalSizeContinuous p).2
+  have hsize' : ContinuousAt (tubeNormalSize p)
+      ((q₀.val,((tubeInverse p q₀).symm (tubeChart p p)).1),
+        ((tubeInverse p q₀).symm (tubeChart p p)).2) := by
+    simpa only [hzero,Prod.fst_zero,Prod.snd_zero] using hsize
+  have hjoined : ContinuousAt (fun z : tubeLabels p × ComplexModel d ↦
+      ((z.1.val,((tubeInverse p z.1).symm z.2).1),
+        ((tubeInverse p z.1).symm z.2).2)) (q₀,tubeChart p p) :=
+    ((continuousAt_subtype_val.comp continuousAt_fst).prodMk hcont.fst).prodMk hcont.snd
+  have hcomposed : ContinuousAt (fun z : tubeLabels p × ComplexModel d ↦
+      tubeNormalSize p ((z.1.val,((tubeInverse p z.1).symm z.2).1),
+        ((tubeInverse p z.1).symm z.2).2)) (q₀,tubeChart p p) :=
+    ContinuousAt.comp (g := tubeNormalSize p) (x := (q₀,tubeChart p p)) (f := fun z : tubeLabels p × ComplexModel d ↦
+      ((z.1.val,((tubeInverse p z.1).symm z.2).1),
+        ((tubeInverse p z.1).symm z.2).2)) hsize' hjoined
+  have hsmall := hcomposed.eventually_lt_const
+    (show tubeNormalSize p ((q₀.val,((tubeInverse p q₀).symm (tubeChart p p)).1),
+      ((tubeInverse p q₀).symm (tubeChart p p)).2) < η by
+        simpa only [hzero,Prod.fst_zero,Prod.snd_zero,hsize0] using hη)
+  obtain ⟨U,V,hU,hqU,hV,hpV,hUV⟩ := mem_nhds_prod_iff'.mp hsmall
+  let AU : Set M := (fun q : tubeLabels p ↦ q.val.val) '' U
+  have hAU : IsOpen AU := by
+    have ho := (coherentU.family 2 p).family.centerDomain_open.isOpenEmbedding_subtypeVal.comp
+      (tubeLabels p).isOpen.isOpenEmbedding_subtypeVal
+    exact ho.isOpenMap _ hU
+  let AV : Set M := (tubeChart p).source ∩ (tubeChart p) ⁻¹' V
+  have hAV : IsOpen AV :=
+    (continuousOn_extChartAt (I := realModel d)
+      (coherentU.family 2 p).family.receivingAnchor).isOpen_inter_preimage
+        (isOpen_extChartAt_source _) hV
+  refine ⟨(tubeCover p ∩ AU) ∩ AV,((hTubeCoverOpen p).inter hAU).inter hAV,
+    ⟨⟨hTubeCoverCenter p,⟨q₀,hqU,rfl⟩⟩,hTubeChartSource p,hpV⟩,
+    fun _ hx ↦ hx.1.1,?_⟩
+  intro q hq x hx
+  obtain ⟨q',hq',heq⟩ := hq.1.2
+  have he : q' = q := Subtype.ext (Subtype.ext heq)
+  have hqu : q ∈ U := he ▸ hq'
+  exact @hUV (q,tubeChart p x) ⟨hqu,hx.2.2⟩
+
+
+
+end
+end HolomorphicAnosov.Ghys

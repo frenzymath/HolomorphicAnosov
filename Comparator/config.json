@@ -1,0 +1,11 @@
+{
+    "challenge_module": "Comparator.Challenge",
+    "solution_module": "Comparator.Solution",
+    "theorem_names": [
+        "HolomorphicAnosov.zhang_theorem_A",
+        "HolomorphicAnosov.zhang_theorem_1_1",
+        "HolomorphicAnosov.zhang_theorem_1_2",
+        "HolomorphicAnosov.zhang_theorem_1_3"
+    ],
+    "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
+}
